@@ -382,6 +382,7 @@
     [MagicalRecord saveWithBlock:^(NSManagedObjectContext *localContext) {
         //TODO: Is there any user setup needed??
         syncAllResult = [self syncAll];
+        [NSManagedObjectContext MR_resetContextForCurrentThread];
     } completion:^(BOOL success, NSError *error) {
         if (!syncAllResult) {
             completion(NO, nil);
