@@ -207,7 +207,7 @@
   } progressBlock:nil];
 }
 
-- (void)testAStoreCreatedParseImageDataAndUpdate {
+- (void)testStoreCreatedParseImageDataAndUpdate {
   NSString *imageName =  @"parse_small.png";
 
   PFObject *person = [PFObject objectWithClassName:@"CDPerson"];
@@ -245,6 +245,53 @@
       NSString *remote_url = [(PFFile *)[remote_persons[0] objectForKey:@"photo"] url];
       assert([remote_url isEqualToString: [pfFile url]]);
       
+      _isFinished = YES;
+    } progressBlock:nil];
+  } progressBlock:nil];
+}
+
+- (void)testStoreCreatedParseImageDataAndUpdateImage {
+  NSString *imageName =  @"parse_small.png";
+
+  PFObject *person = [PFObject objectWithClassName:@"CDPerson"];
+  NSData *imageData = UIImagePNGRepresentation([UIImage imageNamed:imageName]);
+  [person setObject:imageName forKey:@"name"];
+  PFFile *pfFile = [PFFile fileWithData:imageData];
+  [person setObject:pfFile forKey:@"photo"];
+  [person save];
+
+  [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
+    assert(success);
+    Person *person = [Person MR_findFirstByAttribute:@"name" withValue:imageName];
+    assert([[person unarchivePhotoData:@"photo"] isKindOfClass:[NSURL class]]);
+    NSData *imageData = [NSData dataWithContentsOfURL:[person unarchivePhotoData:@"photo"]];
+    assert([imageData isEqualToData:UIImagePNGRepresentation([UIImage imageNamed:imageName])]);
+
+    NSManagedObjectContext *editingContext = [NSManagedObjectContext MR_contextWithParent:[NSManagedObjectContext MR_defaultContext]];
+
+    person = (id)[editingContext existingObjectWithID:[person objectID] error:nil];
+    person.photo = UIImagePNGRepresentation([UIImage imageNamed:@"parse_medium.png"]);
+    [person syncUpdate];
+    [editingContext MR_saveToPersistentStoreAndWait];
+
+    person = [Person MR_findFirstByAttribute:@"name" withValue:imageName];
+    assert([person.syncStatus isEqualToNumber: @1]);
+
+    [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
+      assert(success);
+      Person *person = [Person MR_findFirstByAttribute:@"name" withValue:imageName];
+      
+      assert([[person unarchivePhotoData:@"photo"] isKindOfClass:[UIImage class]]);
+      assert([[person photo] isEqualToData:UIImagePNGRepresentation([UIImage imageNamed:@"parse_medium.png"])]);
+
+      PFQuery *query = [PFQuery queryWithClassName:@"CDPerson"];
+      query.limit = 1000;
+      NSArray *remote_persons = [query findObjects];
+      assert([remote_persons count] == 1);
+      NSString *remote_url = [(PFFile *)[remote_persons[0] objectForKey:@"photo"] url];
+      NSData *imageData2 = [NSData dataWithContentsOfURL: [NSURL URLWithString:remote_url]];
+      assert([imageData2 isEqualToData:UIImagePNGRepresentation([UIImage imageNamed:@"parse_medium.png"])]);
+
       _isFinished = YES;
     } progressBlock:nil];
   } progressBlock:nil];
