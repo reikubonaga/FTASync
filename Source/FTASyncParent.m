@@ -252,11 +252,13 @@
     
     if (self.syncStatusValue == 2 || self.syncStatusValue == 3) {
         FSLog(@"Parent object is new");
-        return NO;
+        //return NO; //for single relation from parse
+        return YES;
     }
     else if([localObject.objectId isEqualToString:remoteObject.objectId]) {
         FSLog(@"Related objects match");
-        return NO;
+        //return NO; //for single relation from parse
+        return YES;
     }
     else if((localObject != nil && localObject.syncStatus == nil) || localObject.syncStatusValue == 2 || localObject.syncStatusValue ==3) {
         //Related object is new locally
@@ -591,7 +593,7 @@
           NSLog(@"relation ship!");
             //To-one relationship
             PFObject *relatedRemoteObject = [parseObject objectForKey:relationship];
-          NSLog(@"parseObject: %@", relatedRemoteObject);
+            NSLog(@"parseObject: %@", relatedRemoteObject);
             FTASyncParent *localRelatedObject = [FTASyncParent FTA_localObjectForClass:destEntity WithRemoteId:relatedRemoteObject.objectId WithContext:context];
             FTASyncParent *currentLocalRelatedObject = [self valueForKey:relationship];
             
@@ -614,7 +616,7 @@
             else if(![self shouldUseRemoteObject:relatedRemoteObject insteadOfLocal:currentLocalRelatedObject forToMany:NO relationship:relationship]) {
                 continue;
             }
-            
+          
             [self setValue:localRelatedObject forKey:relationship];
         }
     }

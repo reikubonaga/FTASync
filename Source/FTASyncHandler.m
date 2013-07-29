@@ -395,6 +395,10 @@
             FSALog(@"%@", @"Completion block must be called on main thread");
         }
 
+        self.syncInProgress = NO;
+        self.progressBlock = nil;
+        self.progress = 0;
+
         //Use this notification and user defaults key to update an "Last Updated" message in the UI
         [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:@"FTASyncLastSyncDate"];
         [[NSUserDefaults standardUserDefaults] synchronize];
@@ -404,9 +408,6 @@
               completion(YES, nil);
         });
 
-        self.syncInProgress = NO;
-        self.progressBlock = nil;
-        self.progress = 0;
 
         //End background task
         if ([[UIDevice currentDevice] isMultitaskingSupported]) {
