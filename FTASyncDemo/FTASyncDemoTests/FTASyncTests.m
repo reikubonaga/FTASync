@@ -194,7 +194,7 @@
     [person setObject:[PFFile fileWithData:imageData] forKey:@"photo"];
     [person save];
   }
-
+  
   [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
     NSLog(@"error: %@", error);
     assert(success);
@@ -575,6 +575,7 @@
         NSSet *set = [NSSet setWithObjects:[persons[0] name], [persons[1] name], nil];
         NSSet *compareSet = [NSSet setWithArray:@[@"test1", @"test2"]];
         assert([set isEqualToSet:compareSet]);
+        assert(![[FTASyncHandler sharedInstance] isSyncInProgress]);
         _isFinished = YES;
       } progressBlock:nil];
     } withParseObjects:objects withEnityName:@"CDPerson"];
