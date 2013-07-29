@@ -88,7 +88,7 @@
 - (void)testUploadUpdatedLocalObjectToParse {
   [self createLocalObjectAndUploadToParse];
   Person *person = [Person MR_findFirst];
-  
+
   NSManagedObjectContext *editingContext = [NSManagedObjectContext MR_contextWithParent:[NSManagedObjectContext MR_defaultContext]];
   person = (id)[editingContext existingObjectWithID:[person objectID] error:nil];
   person.name = @"ichiro";
@@ -196,6 +196,7 @@
   }
 
   [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
+    NSLog(@"error: %@", error);
     assert(success);
     for (NSString *imageName in imageNames) {
       Person *person = [Person MR_findFirstByAttribute:@"name" withValue:imageName];
@@ -244,7 +245,7 @@
       assert([remote_persons count] == 1);
       NSString *remote_url = [(PFFile *)[remote_persons[0] objectForKey:@"photo"] url];
       assert([remote_url isEqualToString: [pfFile url]]);
-      
+
       _isFinished = YES;
     } progressBlock:nil];
   } progressBlock:nil];
@@ -280,7 +281,7 @@
     [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
       assert(success);
       Person *person = [Person MR_findFirstByAttribute:@"name" withValue:imageName];
-      
+
       assert([[person unarchivePhotoData:@"photo"] isKindOfClass:[UIImage class]]);
       assert([[person photo] isEqualToData:UIImagePNGRepresentation([UIImage imageNamed:@"parse_medium.png"])]);
 
@@ -297,9 +298,52 @@
   } progressBlock:nil];
 }
 
+
+- (void)testStoreCreatedParseWithRelation {
+  PFObject *person = [PFObject objectWithClassName:@"CDPerson"];
+  [person setObject:@"taro" forKey:@"name"];
+  assert([person save]);
+  PFObject *todo = [PFObject objectWithClassName:@"CDToDoItem"];
+  [todo setObject:@"todo" forKey:@"name"];
+  [todo setObject:person forKey:@"person"];
+  assert([todo save]);
+
+  [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
+    assert(success);
+    NSArray *persons = [Person MR_findAll];
+    assert([persons count] == 1);
+    assert([[persons[0] name] isEqualToString:@"taro"]);
+
+    NSArray *todos = [ToDoItem MR_findAll];
+    assert([todos count] == 1);
+    Person *person1 = [todos[0] person];
+    Person *person2 = persons[0];
+    assert([person1.objectId isEqualToString:person2.objectId]);
+
+    NSManagedObjectContext *editingContext = [NSManagedObjectContext MR_contextWithParent:[NSManagedObjectContext MR_defaultContext]];
+
+    Person *person = (id)[editingContext existingObjectWithID:[person1 objectID] error:nil];
+    person.name = @"ichiro";
+    [person syncUpdate];
+    [editingContext MR_saveToPersistentStoreAndWait];
+
+    [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
+      assert(success);
+      NSArray *persons = [Person MR_findAll];
+      assert([persons count] == 1);
+      assert([[persons[0] name] isEqualToString:@"ichiro"]);
+
+      NSArray *todos = [ToDoItem MR_findAll];
+      assert([todos count] == 1);
+
+      _isFinished = YES;
+    } progressBlock:nil];
+  } progressBlock:nil];
+}
+
 - (void)testStoreUpdatedParseObject {
   [self createLocalObjectAndUploadToParse];
-  
+
   PFQuery *query = [PFQuery queryWithClassName:@"CDPerson"];
   NSArray *persons = [query findObjects];
   PFObject *person = persons[0];
@@ -559,7 +603,7 @@
       [model MR_deleteEntity];
     }
   }
-  
+
   [[NSUserDefaults standardUserDefaults] setObject:[[NSMutableArray alloc] init] forKey:@"FTASyncDeletedCDPerson"];
   [[FTASyncHandler sharedInstance] setIgnoreContextSave:NO];
 }
@@ -647,7 +691,7 @@
   do {
     [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
   } while (!_isFinished);
-  
+
   _isFinished = NO;
 }
 
