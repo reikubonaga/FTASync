@@ -196,7 +196,6 @@
   }
   
   [[FTASyncHandler sharedInstance] syncWithCompletionBlock:^(BOOL success, NSError *error) {
-    NSLog(@"error: %@", error);
     assert(success);
     for (NSString *imageName in imageNames) {
       Person *person = [Person MR_findFirstByAttribute:@"name" withValue:imageName];
