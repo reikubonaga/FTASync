@@ -580,7 +580,6 @@
       } progressBlock:nil];
     } withParseObjects:objects withEnityName:@"CDPerson"];
   }];
-  _isFinished = YES;
 }
 
 - (void) deleteAllPerseObjects {
