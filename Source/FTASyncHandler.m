@@ -590,7 +590,7 @@
     }
 }
 
--(void)createEntityByRemote:(NSEntityDescription *) entityDesc inContext:(NSManagedObjectContext *)context withParseObjects:(NSMutableArray *)remoteObjectsForSync {
+-(void)createEntityByRemote:(NSEntityDescription *) entityDesc inContext:(NSManagedObjectContext *)context withParseObjects:(NSArray *)remoteObjectsForSync {
   if ([NSThread isMainThread]) {
     FSALog(@"%@", @"This should NEVER be run on the main thread!!");
     return;
