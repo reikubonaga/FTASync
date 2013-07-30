@@ -200,7 +200,7 @@
                                                                               error:&error] mutableCopy];
 
     if (error) {
-        FSALog(@"Cannot get objects from parse server (error: %@)", [error description]);
+        FSLog(@"Cannot get objects from parse server (error: %@)", [error description]);
         return NO;
     }
 
@@ -385,7 +385,9 @@
         [NSManagedObjectContext MR_resetContextForCurrentThread];
     } completion:^(BOOL success, NSError *error) {
         if (!syncAllResult) {
-            completion(NO, nil);
+            self.syncInProgress = NO;
+            completion(NO, error);
+            return;
         }
 
         if (self.progressBlock)
