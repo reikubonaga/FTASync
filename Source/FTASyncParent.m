@@ -414,6 +414,9 @@
         return;
     }
     for (NSString *relationship in relationships) {
+        if (![self hasFaultForRelationshipNamed:relationship]) {
+            continue;
+        }
         NSObject *value = [self valueForKey:relationship];
         
         if ([[relationships objectForKey:relationship] isToMany]) {
